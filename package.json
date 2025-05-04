@@ -1,0 +1,15 @@
+{
+  "name": "offline-layer",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.js",
+  "description": "Drop-in offline-first layer for any web app",
+  "keywords": [
+    "offline",
+    "service-worker",
+    "cache",
+    "network"
+  ],
+  "author": "SamuelRCrider",
+  "license": "MIT"
+}
