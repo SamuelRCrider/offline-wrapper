@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+coverage
+tests
+jest.config.js
+babel.config.cjs
+unittest.md
+todo.md
+.npmignore 

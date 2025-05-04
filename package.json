@@ -1,11 +1,19 @@
 {
   "name": "offline-layer",
   "version": "0.1.0",
-  "type": "commonjs",
-  "main": "index.js",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "description": "Drop-in offline-first layer for any web app",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "rm -rf dist && mkdir -p dist && cp cache.js index.js inputTracker.js network.js queue.js statusUI.js util.js xhr.js dist/ && sed -i '' 's/\\.\\//\\.\\//' dist/*.js",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "offline",
@@ -15,6 +23,17 @@
   ],
   "author": "SamuelRCrider",
   "license": "MIT",
+  "homepage": "https://github.com/SamuelRCrider/offline-layer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamuelRCrider/offline-layer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SamuelRCrider/offline-layer/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@babel/preset-env": "^7.22.5",
     "@testing-library/jest-dom": "^5.16.5",
