@@ -1,3 +1,5 @@
+import { isOnline } from "./network";
+
 // statusUI.js
 export class StatusUI {
   constructor({ autoHide = false, hideDelay = 3000, queueRef = null, cacheRef = null } = {}) {
@@ -59,7 +61,7 @@ export class StatusUI {
     const cacheItems = this.cache ? await this.cache.allKeys() : [];
 
     this.drawer.innerHTML = `
-      <div><strong>Status:</strong> ${navigator.onLine ? 'Online' : 'Offline'}</div>
+      <div><strong>Status:</strong> ${isOnline() ? 'Online' : 'Offline'}</div>
       <hr style="border-color:#555;" />
       <div><strong>Queued Requests:</strong></div>
       <pre>${queueItems.map((req, i) => `${i + 1}. ${req[0]}`).join('\n') || '(none)'}</pre>

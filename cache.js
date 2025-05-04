@@ -2,6 +2,8 @@
 const DB_NAME = 'offline-layer-cache';
 const STORE_NAME = 'get-responses';
 
+// TODO: Instead of a stubbed db, let's use redis
+
 export class LocalCache {
   constructor() {
     this.dbPromise = this.initDB();

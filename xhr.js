@@ -1,5 +1,4 @@
 import { isOnline } from './network.js';
-import { fakeResponse } from './utils.js';
 
 export function patchXHR(queue) {
   const OriginalXHR = window.XMLHttpRequest;
