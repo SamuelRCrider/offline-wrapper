@@ -1,6 +1,6 @@
 // cache.js
-const DB_NAME = 'offline-layer-cache';
-const STORE_NAME = 'get-responses';
+const DB_NAME = "offline-layer-cache";
+const STORE_NAME = "get-responses";
 
 // TODO: Instead of a stubbed db, let's use redis
 
@@ -23,33 +23,84 @@ export class LocalCache {
 
   async store(requestArgs, response) {
     const db = await this.dbPromise;
-    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const tx = db.transaction(STORE_NAME, "readwrite");
     const store = tx.objectStore(STORE_NAME);
     const key = JSON.stringify(requestArgs);
-    const body = await response.clone().text(); // can be .json() later
-    store.put({ body, headers: [...response.headers] }, key);
-    await tx.complete;
+
+    // Clone before consuming
+    const responseClone = response.clone();
+    const body = await response.text(); // can be .json() later
+    store.put(
+      {
+        body,
+        headers: [...responseClone.headers],
+        timestamp: Date.now(),
+      },
+      key
+    );
+
+    return tx.complete.catch((err) => {
+      console.error("[OfflineLayer] Error storing in cache:", err);
+    });
   }
 
   async match(requestArgs) {
-    const db = await this.dbPromise;
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const key = JSON.stringify(requestArgs);
-    return new Promise((resolve) => {
-      const req = store.get(key);
-      req.onsuccess = () => {
-        if (!req.result) return resolve(null);
-        const res = new Response(req.result.body, {
-          headers: req.result.headers
-        });
-        resolve(res);
-      };
-    });
+    try {
+      const db = await this.dbPromise;
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const key = JSON.stringify(requestArgs);
+
+      return new Promise((resolve) => {
+        const req = store.get(key);
+        req.onsuccess = () => {
+          if (!req.result) return resolve(null);
+
+          // Check if the cached item has expired
+          if (this.isExpired(req.result)) {
+            this.deleteItem(key).catch(console.error);
+            return resolve(null);
+          }
+
+          const res = new Response(req.result.body, {
+            headers: req.result.headers,
+          });
+          resolve(res);
+        };
+        req.onerror = (err) => {
+          console.error("[OfflineLayer] Cache match error:", err);
+          resolve(null);
+        };
+      });
+    } catch (err) {
+      console.error("[OfflineLayer] Error during cache match:", err);
+      return null;
+    }
   }
+
+  async deleteItem(key) {
+    try {
+      const db = await this.dbPromise;
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      store.delete(key);
+      return tx.complete;
+    } catch (err) {
+      console.error("[OfflineLayer] Error deleting cached item:", err);
+      return Promise.reject(err);
+    }
+  }
+
+  // Check if a cached item has expired (default 1 day)
+  isExpired(item, maxAge = 24 * 60 * 60 * 1000) {
+    if (!item.timestamp) return false; // No timestamp, assume not expired
+    const now = Date.now();
+    return now - item.timestamp > maxAge;
+  }
+
   async allKeys() {
     const db = await this.dbPromise;
-    const tx = db.transaction(STORE_NAME, 'readonly');
+    const tx = db.transaction(STORE_NAME, "readonly");
     const store = tx.objectStore(STORE_NAME);
 
     return new Promise((resolve) => {
@@ -68,4 +119,3 @@ export class LocalCache {
     });
   }
 }
-
